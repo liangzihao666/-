@@ -3,10 +3,12 @@ import test from 'node:test'
 import {
   defaultPeople,
   drawBlockReason,
+  mergePeople,
   parsePeopleText,
   pickWinners,
   prizeSlotsLeft,
   remainingPeople,
+  rowsToPeople,
   sanitizeState,
 } from '../src/lottery.js'
 
@@ -48,6 +50,38 @@ test('名单文本能保留同名对应的原编号', () => {
   assert.equal(people[0].id, 'staff-01')
   assert.equal(people[0].dept, '光谱应用')
   assert.equal(people[1].dept, '市场')
+})
+
+test('Excel 行能识别中文表头，单列则全部当作姓名', () => {
+  const headed = rowsToPeople([
+    ['姓名', '部门'],
+    ['林启明', '光学研发'],
+    ['', '销售'],
+    ['周婉清', ''],
+  ], [{ id: 'staff-01', name: '林启明', dept: '旧部门' }])
+  assert.equal(headed.imported, 2)
+  assert.equal(headed.people[0].id, 'staff-01')
+  assert.equal(headed.people[0].dept, '光学研发')
+  assert.equal(headed.people[1].dept, '昊量光电')
+  assert.equal(headed.skipped.length, 1)
+
+  const plain = rowsToPeople([
+    ['赵一楠'],
+    ['孙嘉树'],
+  ])
+  assert.deepEqual(plain.people.map(person => person.name), ['赵一楠', '孙嘉树'])
+  assert.equal(plain.skipped.length, 0)
+})
+
+test('追加导入不会重复已有姓名', () => {
+  const current = [{ id: 'a', name: '林启明', dept: '光学研发' }]
+  const incoming = [
+    { id: 'b', name: '林启明', dept: '销售' },
+    { id: 'c', name: '周婉清', dept: '市场' },
+  ]
+  const merged = mergePeople(current, incoming)
+  assert.deepEqual(merged.map(person => person.name), ['林启明', '周婉清'])
+  assert.equal(merged[0].id, 'a')
 })
 
 test('损坏的本地存档会被丢弃', () => {

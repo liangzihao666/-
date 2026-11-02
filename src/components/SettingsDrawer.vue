@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
-import { parsePeopleText, peopleToText, prizeSlotsLeft, prizeWonCount } from '../lottery.js'
+import { downloadPeopleTemplate, readPeopleFile } from '../importPeople.js'
+import { mergePeople, parsePeopleText, peopleToText, prizeSlotsLeft, prizeWonCount } from '../lottery.js'
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -17,6 +18,9 @@ const draftTitle = ref(props.title)
 const draftPeople = ref(peopleToText(props.people))
 const draftPrizes = reactive(props.prizes.map(prize => ({ ...prize })))
 const error = ref('')
+const importReport = ref('')
+const pendingImport = ref(null)
+const fileInput = ref(null)
 const confirmClear = ref(false)
 const confirmDemo = ref(false)
 
@@ -63,6 +67,50 @@ function save() {
   })
 }
 
+function pickFile() {
+  importReport.value = ''
+  pendingImport.value = null
+  if (fileInput.value) fileInput.value.value = ''
+  fileInput.value?.click()
+}
+
+async function onFile(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  try {
+    const current = parsePeopleText(draftPeople.value, props.people)
+    const result = await readPeopleFile(file, current)
+    if (!result.imported) {
+      const detail = result.skipped.length ? `，${formatSkipped(result.skipped)}` : ''
+      importReport.value = `没有读到可用姓名${detail}`
+      pendingImport.value = null
+      return
+    }
+    pendingImport.value = result.people
+    const skipNote = result.skipped.length ? `，跳过 ${result.skipped.length} 行（${formatSkipped(result.skipped)}）` : ''
+    importReport.value = `已识别 ${result.imported} 人${skipNote}。请选择替换或追加，然后点保存。`
+  }
+  catch {
+    importReport.value = '无法读取这个文件，请使用 xlsx、xls 或 csv'
+    pendingImport.value = null
+  }
+}
+
+function formatSkipped(skipped) {
+  return skipped.slice(0, 5).map(item => `第 ${item.row} 行${item.reason}`).join('、')
+}
+
+function applyImport(mode) {
+  if (!pendingImport.value) return
+  const current = parsePeopleText(draftPeople.value, props.people)
+  const next = mode === 'append' ? mergePeople(current, pendingImport.value) : pendingImport.value
+  draftPeople.value = peopleToText(next)
+  importReport.value = mode === 'append'
+    ? `已追加，当前名单 ${next.length} 人。点保存后写入本机。`
+    : `已替换为 ${next.length} 人。点保存后写入本机。`
+  pendingImport.value = null
+}
+
 function onKey(event) {
   if (event.key === 'Escape') emit('close')
 }
@@ -89,6 +137,29 @@ function onKey(event) {
         <textarea v-model="draftPeople" rows="10" spellcheck="false" placeholder="林启明,光学研发"></textarea>
         <small>每行一位，格式「姓名,部门」。保存后已不在名单中的中奖记录会去掉。</small>
       </label>
+
+      <div class="field">
+        <div class="field-row">
+          <span>导入 Excel</span>
+          <button class="ghost tiny" type="button" @click="downloadPeopleTemplate">下载模板</button>
+        </div>
+        <div class="import-actions">
+          <button class="ghost" type="button" @click="pickFile">选择 Excel / CSV</button>
+          <input
+            ref="fileInput"
+            class="file-input"
+            type="file"
+            accept=".xlsx,.xls,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+            @change="onFile"
+          />
+        </div>
+        <p v-if="importReport" class="import-report">{{ importReport }}</p>
+        <div v-if="pendingImport" class="import-actions">
+          <button class="ghost" type="button" @click="applyImport('replace')">替换当前名单</button>
+          <button class="ghost" type="button" @click="applyImport('append')">追加到名单</button>
+        </div>
+        <small>支持 xlsx、xls、csv。表头认「姓名 / name」，部门可用「部门 / dept」。只有一列时整列当作姓名。</small>
+      </div>
 
       <label class="switch">
         <input type="checkbox" :checked="onceOnly" @change="emit('toggle-once', $event.target.checked)" />

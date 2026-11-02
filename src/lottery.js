@@ -43,12 +43,69 @@ export function parsePeopleText(text, previous = []) {
     const name = parts[0]
     if (!name) continue
     const dept = parts[1] || '昊量光电'
-    const existing = previous.find(person => person.name === name && !used.has(person.id))
-    const id = existing?.id || `p-${people.length}-${Math.random().toString(36).slice(2, 8)}`
-    if (existing) used.add(existing.id)
-    people.push({ id, name, dept })
+    people.push(personFromRow(name, dept, previous, used, people.length))
   }
   return people
+}
+
+const NAME_HEADERS = new Set(['姓名', '名字', '名称', 'name', '人员', '员工', '参与人', '人员姓名', '员工姓名'])
+const DEPT_HEADERS = new Set(['部门', 'dept', 'department', '科室', '单位', '所属部门', '部门名称'])
+
+function headerKey(value) {
+  return String(value ?? '').trim().toLowerCase().replace(/\s+/g, '')
+}
+
+function personFromRow(name, dept, previous, used, index) {
+  const existing = previous.find(person => person.name === name && !used.has(person.id))
+  const id = existing?.id || `p-${index}-${Math.random().toString(36).slice(2, 8)}`
+  if (existing) used.add(existing.id)
+  return { id, name, dept: dept || '昊量光电' }
+}
+
+/**
+ * 把表格行转成人员。首行若出现常见表头（姓名 / name、部门 / dept）则跳过。
+ * 只有一列时整列当作姓名。
+ */
+export function rowsToPeople(rows, previous = []) {
+  const skipped = []
+  const matrix = (rows || [])
+    .map(row => (Array.isArray(row) ? row : Object.values(row || {})))
+    .filter(row => row.some(cell => String(cell ?? '').trim()))
+  if (!matrix.length) return { people: [], imported: 0, skipped }
+
+  const header = matrix[0].map(headerKey)
+  let nameIndex = header.findIndex(cell => NAME_HEADERS.has(cell))
+  let deptIndex = header.findIndex(cell => DEPT_HEADERS.has(cell))
+  const hasHeader = nameIndex >= 0 || deptIndex >= 0
+  const start = hasHeader ? 1 : 0
+  if (!hasHeader) {
+    nameIndex = 0
+    deptIndex = matrix.some(row => String(row[1] ?? '').trim()) ? 1 : -1
+  } else if (nameIndex < 0) {
+    nameIndex = header.findIndex((_, index) => index !== deptIndex)
+    if (nameIndex < 0) nameIndex = 0
+  }
+
+  const used = new Set()
+  const people = []
+  for (let index = start; index < matrix.length; index += 1) {
+    const row = matrix[index]
+    const name = String(row[nameIndex] ?? '').trim()
+    const sourceRow = index + 1
+    if (!name || NAME_HEADERS.has(headerKey(name))) {
+      skipped.push({ row: sourceRow, reason: '缺少姓名' })
+      continue
+    }
+    const dept = deptIndex >= 0 ? String(row[deptIndex] ?? '').trim() : ''
+    people.push(personFromRow(name, dept, previous, used, people.length))
+  }
+  return { people, imported: people.length, skipped }
+}
+
+export function mergePeople(current, incoming) {
+  const names = new Set(current.map(person => person.name))
+  const extra = incoming.filter(person => !names.has(person.name))
+  return current.concat(extra)
 }
 
 export function shuffle(list, rng = Math.random) {

@@ -40,6 +40,7 @@ let sphere
 let emblem
 let logo
 let burstPoints
+let motes
 let burst
 let envTarget
 let softTexture
@@ -208,7 +209,7 @@ async function reveal(winners) {
     return
   }
   setMode('brake')
-  await waitUntil(() => speed < 0.04, 2400)
+  await waitUntil(() => speed < 0.05, 3600)
   speed = 0
   setMode('reveal')
   const ranked = cards
@@ -227,11 +228,18 @@ async function reveal(winners) {
     cssScene.attach(card)
     const from = card.position.clone()
     const fromQuat = card.quaternion.clone()
-    const to = new THREE.Vector3((index - (n - 1) / 2) * span, 80, 1320)
-    await tween(980, easeOut, (k) => {
+    const to = new THREE.Vector3((index - (n - 1) / 2) * span, 120, 1480)
+    const identity = new THREE.Quaternion()
+    const blended = new THREE.Quaternion()
+    const flip = new THREE.Quaternion()
+    const axis = new THREE.Vector3(1, 0, 0)
+    await tween(1280, easeOut, (k) => {
       card.position.lerpVectors(from, to, k)
-      card.quaternion.slerpQuaternions(fromQuat, new THREE.Quaternion(), k)
-      card.scale.setScalar(THREE.MathUtils.lerp(1, scale, k))
+      card.position.y += Math.sin(k * Math.PI) * 140
+      blended.slerpQuaternions(fromQuat, identity, k)
+      flip.setFromAxisAngle(axis, Math.PI * (1 - k))
+      card.quaternion.copy(blended).multiply(flip)
+      card.scale.setScalar(THREE.MathUtils.lerp(1, scale * 1.2, easeOut(k)))
     })
   }))
   emit('flash')
@@ -270,6 +278,34 @@ function makeSoftTexture() {
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   return texture
+}
+
+function makeMotes(texture) {
+  const count = 96
+  const positions = new Float32Array(count * 3)
+  const colors = new Float32Array(count * 3)
+  for (let index = 0; index < count; index += 1) {
+    const radius = 520 + Math.random() * 980
+    const theta = Math.random() * Math.PI * 2
+    positions[index * 3] = Math.cos(theta) * radius
+    positions[index * 3 + 1] = (Math.random() - 0.45) * 1500
+    positions[index * 3 + 2] = Math.sin(theta) * radius * 0.55
+    const tint = index % 2 === 0 ? [0.72, 0.93, 0.98] : [0.45, 0.82, 0.92]
+    colors.set(tint, index * 3)
+  }
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+  const material = new THREE.PointsMaterial({
+    size: 20,
+    map: texture,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.42,
+    depthWrite: false,
+    sizeAttenuation: true,
+  })
+  return new THREE.Points(geometry, material)
 }
 
 function makeBurst(texture) {
@@ -372,13 +408,16 @@ function frame(now) {
   const dt = Math.min(0.05, (now - lastTick) / 1000 || 0)
   lastTick = now
   elapsed += dt
-  const spinTarget = mode === 'spin' ? (reduceMotion ? 0.7 : 2.35) : mode === 'brake' ? 0 : 0.16
-  const lambda = mode === 'brake' ? 3.4 : 2
+  const spinTarget = mode === 'spin' ? (reduceMotion ? 0.7 : 2.8) : mode === 'brake' ? 0 : 0.12
+  const lambda = mode === 'brake' ? 1.15 : mode === 'spin' ? 1.6 : 1.4
   speed = THREE.MathUtils.damp(speed, spinTarget, lambda, dt)
   if (sphere) {
     sphere.rotation.y += speed * dt
-    sphere.rotation.x = Math.sin(elapsed * 0.35) * 0.07
+    const drift = mode === 'spin' ? 0.14 : 0.08
+    sphere.rotation.x = Math.sin(elapsed * 0.32) * drift
+    sphere.rotation.z = Math.sin(elapsed * 0.18) * (mode === 'idle' ? 0.05 : 0.02)
   }
+  if (motes) motes.rotation.y += dt * (mode === 'spin' ? 0.18 : 0.04)
   if (mode === 'spin' && now - shuffleAt > (reduceMotion ? 220 : 90)) {
     reshuffle()
     shuffleAt = now
@@ -486,6 +525,8 @@ function mountScene() {
 
   burstPoints = makeBurst(softTexture)
   webglScene.add(burstPoints)
+  motes = makeMotes(softTexture)
+  webglScene.add(motes)
 
   sphere = new THREE.Group()
   cssScene.add(sphere)
@@ -554,8 +595,9 @@ defineExpose({ spin, reveal, restore })
 </script>
 
 <template>
-  <div ref="host" class="stage-host">
+  <div ref="host" class="stage-host" :class="aura">
     <div class="aura" :class="aura"></div>
+    <div class="sweep"></div>
     <img v-if="fallback" class="fallback-logo" src="/brand/aunion-logo.png" alt="昊量光电 aunion" />
   </div>
 </template>

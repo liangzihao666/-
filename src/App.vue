@@ -43,6 +43,7 @@ const packets = [
 const onceOnly = computed(() => state.onceOnly !== false)
 const pool = computed(() => eligiblePeople(state.people, state.winners, onceOnly.value))
 const currentPrize = computed(() => state.prizes.find(prize => prize.id === state.currentPrizeId) || state.prizes[0])
+const prizeWon = computed(() => state.winners.filter(winner => winner.prizeId === currentPrize.value?.id).length)
 const locked = computed(() => ['intro', 'spin', 'stopping', 'reveal'].includes(phase.value) || busy.value)
 
 const goLabel = computed(() => {
@@ -297,6 +298,10 @@ onBeforeUnmount(() => {
     </aside>
 
     <footer class="dock">
+      <div v-if="currentPrize" class="prize-now">
+        <span>{{ currentPrize.name }}</span>
+        <em>{{ prizeWon }}/{{ currentPrize.count }}</em>
+      </div>
       <div class="action">
         <button
           class="go stage"
