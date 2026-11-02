@@ -173,13 +173,13 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 220px;
+  width: min(520px, 58vw);
   pointer-events: none;
 }
 .brand-stage {
   position: relative;
-  width: 168px;
-  height: 132px;
+  width: 100%;
+  height: 108px;
   margin-top: 2px;
 }
 .lockup {
@@ -635,8 +635,8 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 
 @media (max-width: 900px) {
   .top { flex-wrap: wrap; }
-  .brand-lockup { width: 180px; }
-  .brand-stage { width: 140px; height: 110px; }
+  .brand-lockup { width: min(100%, 340px); }
+  .brand-stage { height: 86px; }
   .year { font-size: 22px; }
   .name { font-size: 16px; letter-spacing: 0.08em; }
   .history { display: none; }

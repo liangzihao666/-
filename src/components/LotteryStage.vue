@@ -395,8 +395,8 @@ function layout() {
 function frameBrand() {
   if (!badgeCamera) return
   const aspect = badgeCamera.aspect || 1
-  const vertical = 9.4
-  const horizontal = 10.2
+  const vertical = 3.1
+  const horizontal = 10.4
   const half = THREE.MathUtils.degToRad(35 / 2)
   const distance = Math.max(vertical, horizontal / aspect) / (2 * Math.tan(half))
   badgeCamera.fov = 35
