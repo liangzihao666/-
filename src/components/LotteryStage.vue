@@ -218,8 +218,11 @@ async function reveal(winners) {
   const chosen = ranked.slice(0, winners.length).map(item => item.card)
   cards.forEach(card => card.element.classList.add('is-dim'))
   const n = chosen.length
-  const scale = n >= 6 ? 1.02 : n >= 4 ? 1.16 : 1.42
-  const span = n >= 6 ? 196 : n >= 4 ? 250 : 300
+  const scale = n >= 6 ? 1.05 : n >= 4 ? 1.28 : 1.72
+  const span = n >= 6 ? 170 : n >= 4 ? 200 : 0
+  const aim = new THREE.Vector3(0, -50, 0).sub(camera.position).normalize()
+  const center = camera.position.clone().addScaledVector(aim, 1280)
+  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion)
   await Promise.all(chosen.map(async (card, index) => {
     const person = winners[index]
     card.userData.locked = true
@@ -228,18 +231,18 @@ async function reveal(winners) {
     cssScene.attach(card)
     const from = card.position.clone()
     const fromQuat = card.quaternion.clone()
-    const to = new THREE.Vector3((index - (n - 1) / 2) * span, 120, 1480)
+    const to = center.clone().addScaledVector(right, (index - (n - 1) / 2) * span)
     const identity = new THREE.Quaternion()
     const blended = new THREE.Quaternion()
     const flip = new THREE.Quaternion()
     const axis = new THREE.Vector3(1, 0, 0)
     await tween(1280, easeOut, (k) => {
       card.position.lerpVectors(from, to, k)
-      card.position.y += Math.sin(k * Math.PI) * 140
+      card.position.y += Math.sin(k * Math.PI) * 70 * (1 - k)
       blended.slerpQuaternions(fromQuat, identity, k)
       flip.setFromAxisAngle(axis, Math.PI * (1 - k))
       card.quaternion.copy(blended).multiply(flip)
-      card.scale.setScalar(THREE.MathUtils.lerp(1, scale * 1.2, easeOut(k)))
+      card.scale.setScalar(THREE.MathUtils.lerp(1, scale, k))
     })
   }))
   emit('flash')

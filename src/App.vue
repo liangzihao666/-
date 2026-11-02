@@ -41,7 +41,7 @@ const packets = [
   { id: 20, left: 34, delay: -2.4, duration: 9.5, size: 22, drift: -22, rotate: 11, extra: true },
 ]
 const idleColors = ['#e53935', '#c62828', '#ef5350', '#f6c453', '#e7c56a', '#fff7ea', '#9fd8ea', '#0869ac']
-const idleBits = Array.from({ length: 300 }, (_, index) => ({
+const idleBits = Array.from({ length: 220 }, (_, index) => ({
   id: `idle-${index}`,
   left: (index * 2.41) % 100,
   delay: -((index * 0.47) % 24),
@@ -52,7 +52,7 @@ const idleBits = Array.from({ length: 300 }, (_, index) => ({
   color: idleColors[index % idleColors.length],
   shape: ['dot', 'ribbon', 'diamond'][index % 3],
 }))
-const idlePackets = Array.from({ length: 24 }, (_, index) => ({
+const idlePackets = Array.from({ length: 12 }, (_, index) => ({
   id: 30 + index,
   left: (index * 4.1 + 3) % 100,
   delay: -((index * 1.7) % 26),
@@ -64,7 +64,6 @@ const idlePackets = Array.from({ length: 24 }, (_, index) => ({
 const onceOnly = computed(() => state.onceOnly !== false)
 const pool = computed(() => eligiblePeople(state.people, state.winners, onceOnly.value))
 const currentPrize = computed(() => state.prizes.find(prize => prize.id === state.currentPrizeId) || state.prizes[0])
-const prizeWon = computed(() => state.winners.filter(winner => winner.prizeId === currentPrize.value?.id).length)
 const locked = computed(() => ['intro', 'spin', 'stopping', 'reveal'].includes(phase.value) || busy.value)
 
 const goLabel = computed(() => {
@@ -347,10 +346,6 @@ onBeforeUnmount(() => {
     </aside>
 
     <footer class="dock">
-      <div v-if="currentPrize" class="prize-now">
-        <span>{{ currentPrize.name }}</span>
-        <em>{{ prizeWon }}/{{ currentPrize.count }}</em>
-      </div>
       <div class="action">
         <button
           class="go stage"
