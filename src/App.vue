@@ -321,12 +321,9 @@ onBeforeUnmount(() => {
 
     <header class="top">
       <div class="brand-lockup">
+        <h1 class="lockup"><span class="year">2027</span><span class="name">年会抽奖</span></h1>
         <div id="brand-stage" class="brand-stage" aria-hidden="true"></div>
-        <div class="lockup">
-          <p class="eyebrow">AUNION</p>
-          <h1><span class="year">2027</span><span class="name">年会抽奖</span></h1>
-          <p v-if="showCustomTitle" class="custom-title">{{ state.title }}</p>
-        </div>
+        <p v-if="showCustomTitle" class="custom-title">{{ state.title }}</p>
       </div>
       <button class="icon-btn" type="button" :disabled="locked" aria-label="设置" title="设置" @click="settingsOpen = true">
         <svg viewBox="0 0 24 24" aria-hidden="true">

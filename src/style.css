@@ -153,8 +153,8 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 .top, .dock, .history, .drawer, .toast { z-index: 6; }
 .top {
   position: absolute;
-  top: 18px;
-  left: 28px;
+  top: 10px;
+  left: 16px;
   right: 22px;
   display: flex;
   align-items: flex-start;
@@ -170,43 +170,40 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 }
 .brand-lockup {
   position: relative;
-  width: min(720px, 62vw);
-  height: 228px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 220px;
   pointer-events: none;
 }
-.brand-stage { position: absolute; inset: 0; }
+.brand-stage {
+  position: relative;
+  width: 168px;
+  height: 132px;
+  margin-top: 2px;
+}
 .lockup {
-  position: absolute;
-  left: 50%;
-  top: 8px;
+  position: relative;
   z-index: 2;
-  transform: translateX(-50%);
-  text-align: center;
+  margin: 0;
+  font-weight: 650;
+  line-height: 1.1;
+  text-align: left;
+  white-space: nowrap;
   pointer-events: none;
 }
-.eyebrow {
-  margin: 0 0 2px;
-  color: var(--cyan);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.42em;
-}
-.lockup h1 { margin: 0; font-weight: 560; line-height: 1; }
 .year {
-  display: block;
   color: #079bb8;
-  font-size: 52px;
+  font-size: 28px;
   font-weight: 720;
-  letter-spacing: 0.06em;
-  text-shadow: 0 8px 24px rgb(255 255 255 / 85%);
+  letter-spacing: 0.02em;
 }
 .name {
-  display: block;
-  margin-top: 4px;
+  margin-left: 8px;
   color: var(--blue);
-  font-size: 15px;
+  font-size: 22px;
   font-weight: 650;
-  letter-spacing: 0.46em;
+  letter-spacing: 0.12em;
 }
 .custom-title {
   margin: 6px 0 0;
@@ -638,10 +635,10 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 
 @media (max-width: 900px) {
   .top { flex-wrap: wrap; }
-  .brand-lockup { width: min(100%, 420px); height: 180px; }
-  .year { font-size: 36px; }
-  .year { font-size: 24px; }
-  .name { font-size: 15px; letter-spacing: 0.14em; }
+  .brand-lockup { width: 180px; }
+  .brand-stage { width: 140px; height: 110px; }
+  .year { font-size: 22px; }
+  .name { font-size: 16px; letter-spacing: 0.08em; }
   .history { display: none; }
   .dock { flex-direction: column; align-items: stretch; }
   .action { width: auto; text-align: left; }

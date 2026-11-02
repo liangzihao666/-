@@ -395,8 +395,8 @@ function layout() {
 function frameBrand() {
   if (!badgeCamera) return
   const aspect = badgeCamera.aspect || 1
-  const vertical = 4.7
-  const horizontal = 11.6
+  const vertical = 9.4
+  const horizontal = 10.2
   const half = THREE.MathUtils.degToRad(35 / 2)
   const distance = Math.max(vertical, horizontal / aspect) / (2 * Math.tan(half))
   badgeCamera.fov = 35
@@ -523,7 +523,7 @@ function mountScene() {
   badgeScene.add(badgeRim)
   badgeCamera = new THREE.PerspectiveCamera(35, 480 / 150, 0.1, 80)
   frameBrand()
-  emblem.position.y = -0.35
+  emblem.position.set(0, 0, 0)
   badgeScene.add(emblem)
 
   burstPoints = makeBurst(softTexture)
