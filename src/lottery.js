@@ -73,20 +73,24 @@ export function prizeSlotsLeft(prize, winners) {
   return Math.max(0, Number(prize.count) - prizeWonCount(prize, winners))
 }
 
-export function pickWinners({ people, winners, prize, rng = Math.random }) {
+export function eligiblePeople(people, winners, onceOnly = true) {
+  return onceOnly ? remainingPeople(people, winners) : people
+}
+
+export function pickWinners({ people, winners, prize, onceOnly = true, rng = Math.random }) {
   if (!prize) return []
-  const pool = remainingPeople(people, winners)
+  const pool = eligiblePeople(people, winners, onceOnly)
   const slots = prizeSlotsLeft(prize, winners)
   const count = Math.min(Math.max(1, Number(prize.perDraw) || 1), slots, pool.length)
   if (count <= 0) return []
   return shuffle(pool, rng).slice(0, count)
 }
 
-export function drawBlockReason(prize, people, winners) {
+export function drawBlockReason(prize, people, winners, onceOnly = true) {
   if (!prize) return '请先配置奖项'
   if (!people.length) return '请先添加参与人员'
-  if (!remainingPeople(people, winners).length) return '所有人员都已中奖'
-  if (prizeSlotsLeft(prize, winners) <= 0) return `${prize.name}名额已满，请切换奖项`
+  if (!eligiblePeople(people, winners, onceOnly).length) return '所有人员都已中奖'
+  if (prizeSlotsLeft(prize, winners) <= 0) return `${prize.name}名额已满，请到设置里切换奖项`
   return ''
 }
 
@@ -97,6 +101,7 @@ export function freshState() {
     prizes: defaultPrizes.map(prize => ({ ...prize })),
     winners: [],
     currentPrizeId: defaultPrizes[0].id,
+    onceOnly: true,
   }
 }
 
@@ -139,6 +144,7 @@ export function sanitizeState(data) {
     ? data.currentPrizeId
     : prizes[0].id
   return {
+    onceOnly: data.onceOnly !== false,
     title: String(data.title || defaultTitle),
     people,
     prizes,

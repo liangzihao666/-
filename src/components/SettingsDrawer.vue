@@ -1,14 +1,17 @@
 <script setup>
 import { reactive, ref } from 'vue'
-import { parsePeopleText, peopleToText } from '../lottery.js'
+import { parsePeopleText, peopleToText, prizeSlotsLeft, prizeWonCount } from '../lottery.js'
 
 const props = defineProps({
   title: { type: String, default: '' },
   people: { type: Array, default: () => [] },
   prizes: { type: Array, default: () => [] },
+  winners: { type: Array, default: () => [] },
+  currentPrizeId: { type: String, default: '' },
+  onceOnly: { type: Boolean, default: true },
 })
 
-const emit = defineEmits(['close', 'save', 'reset-demo', 'clear-winners'])
+const emit = defineEmits(['close', 'save', 'reset-demo', 'clear-winners', 'select-prize', 'toggle-once'])
 
 const draftTitle = ref(props.title)
 const draftPeople = ref(peopleToText(props.people))
@@ -84,8 +87,31 @@ function onKey(event) {
       <label class="field">
         <span>参与人员</span>
         <textarea v-model="draftPeople" rows="10" spellcheck="false" placeholder="林启明,光学研发"></textarea>
-        <small>每行一位，格式「姓名,部门」。保存后已不在名单中的中奖记录会去掉，其余中奖者不会重复中奖。</small>
+        <small>每行一位，格式「姓名,部门」。保存后已不在名单中的中奖记录会去掉。</small>
       </label>
+
+      <label class="switch">
+        <input type="checkbox" :checked="onceOnly" @change="emit('toggle-once', $event.target.checked)" />
+        <span>同一人只中一次</span>
+      </label>
+
+      <div class="field">
+        <span>当前抽取</span>
+        <div class="prize-pick" role="listbox" aria-label="选择奖项">
+          <button
+            v-for="prize in prizes"
+            :key="prize.id"
+            type="button"
+            class="pick"
+            :class="{ active: prize.id === currentPrizeId, done: prizeSlotsLeft(prize, winners) === 0 }"
+            @click="emit('select-prize', prize.id)"
+          >
+            <strong>{{ prize.name }}</strong>
+            <em>{{ prizeWonCount(prize, winners) }}/{{ prize.count }}</em>
+            <small>{{ prize.gift }}</small>
+          </button>
+        </div>
+      </div>
 
       <div class="field">
         <div class="field-row">

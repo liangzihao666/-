@@ -39,7 +39,6 @@ let cssScene
 let sphere
 let emblem
 let logo
-let ringA
 let burstPoints
 let burst
 let envTarget
@@ -384,9 +383,8 @@ function frame(now) {
     reshuffle()
     shuffleAt = now
   }
-  if (emblem) emblem.rotation.y = Math.sin(elapsed * 0.45) * 0.16
-  if (ringA) ringA.rotation.z += dt * 0.22
-  if (logo) setBrandEmissive(logo, mode === 'spin' ? 0.05 : 0)
+  if (emblem) emblem.rotation.y = Math.sin(elapsed * 0.4) * 0.12
+  if (logo) setBrandEmissive(logo, mode === 'spin' ? 0.34 : 0.22)
   updateBurst(dt)
   cssRenderer?.render(cssScene, camera)
   renderer?.render(webglScene, camera)
@@ -457,18 +455,6 @@ function mountScene() {
   emblem.add(logo)
 
   softTexture = makeSoftTexture()
-  ringA = new THREE.Mesh(
-    new THREE.TorusGeometry(5.15, 0.055, 12, 120),
-    new THREE.MeshStandardMaterial({
-      color: '#079bb8',
-      metalness: 0.45,
-      roughness: 0.28,
-      emissive: '#079bb8',
-      emissiveIntensity: 0.22,
-    }),
-  )
-  ringA.rotation.x = Math.PI / 2.25
-  emblem.add(ringA)
 
   badgeHost = document.createElement('div')
   badgeHost.className = 'logo-badge'
@@ -479,20 +465,23 @@ function mountScene() {
   badgeRenderer.setClearColor(0x000000, 0)
   badgeRenderer.outputColorSpace = THREE.SRGBColorSpace
   badgeRenderer.toneMapping = THREE.ACESFilmicToneMapping
-  badgeRenderer.toneMappingExposure = 1.08
+  badgeRenderer.toneMappingExposure = 1.42
   badgeHost.appendChild(badgeRenderer.domElement)
   badgeScene = new THREE.Scene()
   badgeScene.environment = envTarget.texture
-  badgeScene.add(new THREE.HemisphereLight(0xfffbf2, 0x71838f, 1.1))
-  const badgeKey = new THREE.DirectionalLight(0xffffff, 1.5)
-  badgeKey.position.set(-3, 6, 8)
+  badgeScene.add(new THREE.HemisphereLight(0xffffff, 0xd5e8f0, 1.85))
+  const badgeKey = new THREE.DirectionalLight(0xffffff, 2.6)
+  badgeKey.position.set(-2, 6, 9)
   badgeScene.add(badgeKey)
-  const badgeRim = new THREE.DirectionalLight(0xf2dfb8, 1.5)
-  badgeRim.position.set(4, 0, -3)
+  const badgeFill = new THREE.DirectionalLight(0xf4fbff, 1.35)
+  badgeFill.position.set(0, 1.5, 8)
+  badgeScene.add(badgeFill)
+  const badgeRim = new THREE.DirectionalLight(0x9fe7f4, 1.15)
+  badgeRim.position.set(5, 2, -2)
   badgeScene.add(badgeRim)
   badgeCamera = new THREE.PerspectiveCamera(35, 480 / 150, 0.1, 80)
   frameBrand()
-  emblem.position.y = -1.05
+  emblem.position.y = -0.35
   badgeScene.add(emblem)
 
   burstPoints = makeBurst(softTexture)

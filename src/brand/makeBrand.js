@@ -24,17 +24,19 @@ function extrudedPaths(path, color) {
       })
       const face = new THREE.MeshStandardMaterial({
         color,
-        metalness: 0.16,
-        roughness: 0.32,
-        envMapIntensity: 0.3,
-        emissive: '#2494c5',
-        emissiveIntensity: 0,
+        metalness: 0.12,
+        roughness: 0.28,
+        envMapIntensity: 0.72,
+        emissive: color,
+        emissiveIntensity: 0.22,
       })
       const edge = new THREE.MeshStandardMaterial({
         color,
-        metalness: 0.65,
-        roughness: 0.28,
-        envMapIntensity: 0.7,
+        metalness: 0.42,
+        roughness: 0.22,
+        envMapIntensity: 1,
+        emissive: color,
+        emissiveIntensity: 0.08,
       })
       group.add(new THREE.Mesh(geometry, [face, edge]))
     }
