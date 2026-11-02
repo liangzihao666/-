@@ -1,0 +1,11 @@
+球面姓名牌抽奖交互改编自 log-lottery
+https://github.com/LOG1997/log-lottery
+Copyright (c) 2024 LOG1997
+MIT License
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of that work.
+
+品牌挤出标志改编自昊量光电 / Aunion Tech 官网三维场景 BrandScene.makeBrand()：
+箭头路径、wordmark-paths.json 中的 aunion 字标，以及品牌蓝 #0869ac、#079bb8。
+public/brand/ 内的 aunion-logo.png、company_icon.png、brand-outline.svg 为昊量光电品牌素材。
