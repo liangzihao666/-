@@ -41,9 +41,6 @@ let emblem
 let logo
 let burstPoints
 let motes
-let shell
-let ribbon
-const shockRings = []
 let burst
 let envTarget
 let softTexture
@@ -76,13 +73,8 @@ function personAt(index) {
 function paint(card, person, winner = false) {
   const name = card.element.querySelector('.np-name')
   const dept = card.element.querySelector('.np-dept')
-  const prize = card.element.querySelector('.np-prize')
   name.textContent = person?.name || ''
   dept.textContent = person?.dept || ''
-  if (prize) {
-    prize.textContent = winner ? (person?.prizeName || '') : ''
-    prize.hidden = !winner || !person?.prizeName
-  }
   card.element.classList.toggle('is-winner', winner)
   card.userData.personId = person?.id || ''
 }
@@ -90,7 +82,7 @@ function paint(card, person, winner = false) {
 function makeCard(person) {
   const element = document.createElement('div')
   element.className = 'nameplate'
-  element.innerHTML = '<span class="np-prize" hidden></span><span class="np-name"></span><span class="np-dept"></span>'
+  element.innerHTML = '<span class="np-name"></span><span class="np-dept"></span>'
   const card = new CSS3DObject(element)
   paint(card, person)
   return card
@@ -226,12 +218,8 @@ async function reveal(winners) {
   const chosen = ranked.slice(0, winners.length).map(item => item.card)
   cards.forEach(card => card.element.classList.add('is-dim'))
   const n = chosen.length
-  const scale = n >= 6 ? 0.78 : n >= 4 ? 0.9 : 1
-  const span = n >= 6 ? 150 : n >= 4 ? 176 : 0
-  const lookTarget = new THREE.Vector3(0, -50, 0)
-  const aim = lookTarget.sub(camera.position).normalize()
-  const center = camera.position.clone().addScaledVector(aim, 1180)
-  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion)
+  const scale = n >= 6 ? 1.02 : n >= 4 ? 1.16 : 1.42
+  const span = n >= 6 ? 196 : n >= 4 ? 250 : 300
   await Promise.all(chosen.map(async (card, index) => {
     const person = winners[index]
     card.userData.locked = true
@@ -240,18 +228,18 @@ async function reveal(winners) {
     cssScene.attach(card)
     const from = card.position.clone()
     const fromQuat = card.quaternion.clone()
-    const to = center.clone().addScaledVector(right, (index - (n - 1) / 2) * span)
+    const to = new THREE.Vector3((index - (n - 1) / 2) * span, 120, 1480)
     const identity = new THREE.Quaternion()
     const blended = new THREE.Quaternion()
     const flip = new THREE.Quaternion()
     const axis = new THREE.Vector3(1, 0, 0)
-    await tween(1100, easeOut, (k) => {
+    await tween(1280, easeOut, (k) => {
       card.position.lerpVectors(from, to, k)
-      card.position.y += Math.sin(k * Math.PI) * 48 * (1 - k)
+      card.position.y += Math.sin(k * Math.PI) * 140
       blended.slerpQuaternions(fromQuat, identity, k)
-      flip.setFromAxisAngle(axis, Math.PI * 0.85 * (1 - k))
+      flip.setFromAxisAngle(axis, Math.PI * (1 - k))
       card.quaternion.copy(blended).multiply(flip)
-      card.scale.setScalar(THREE.MathUtils.lerp(1, scale, k))
+      card.scale.setScalar(THREE.MathUtils.lerp(1, scale * 1.2, easeOut(k)))
     })
   }))
   emit('flash')
@@ -434,29 +422,6 @@ function frame(now) {
     reshuffle()
     shuffleAt = now
   }
-  if (mode === 'spin') {
-    cards.forEach((card, index) => {
-      if (card.userData.locked || card.parent !== sphere) return
-      card.scale.setScalar(1 + Math.sin(elapsed * 5.5 + index * 0.45) * 0.045)
-    })
-  }
-  shockRings.forEach((ring) => {
-    const spinning = mode === 'spin'
-    const cycle = ((elapsed * 0.42) + ring.userData.offset) % 1
-    ring.visible = spinning
-    ring.scale.setScalar(90 + cycle * 980)
-    ring.material.opacity = spinning ? (1 - cycle) * 0.42 : 0
-    ring.lookAt(camera.position)
-  })
-  if (shell) {
-    const breath = 0.045 + Math.sin(elapsed * 1.3) * 0.02
-    shell.material.opacity = mode === 'spin' ? breath + 0.06 : breath
-    shell.rotation.y += dt * 0.05
-  }
-  if (ribbon) {
-    ribbon.rotation.z += dt * (mode === 'spin' ? 0.35 : 0.08)
-    ribbon.material.opacity = mode === 'spin' ? 0.55 : 0.28
-  }
   if (emblem) emblem.rotation.y = Math.sin(elapsed * 0.4) * 0.12
   if (logo) setBrandEmissive(logo, mode === 'spin' ? 0.34 : 0.22)
   updateBurst(dt)
@@ -562,32 +527,6 @@ function mountScene() {
   webglScene.add(burstPoints)
   motes = makeMotes(softTexture)
   webglScene.add(motes)
-  shell = new THREE.Mesh(
-    new THREE.SphereGeometry(RADIUS + 36, 48, 32),
-    new THREE.MeshBasicMaterial({ color: 0x7fd4ea, transparent: true, opacity: 0.06, side: THREE.BackSide, depthWrite: false }),
-  )
-  webglScene.add(shell)
-  ribbon = new THREE.Mesh(
-    new THREE.TorusGeometry(RADIUS + 18, 3.2, 10, 180),
-    new THREE.MeshBasicMaterial({ color: 0x079bb8, transparent: true, opacity: 0.28, depthWrite: false }),
-  )
-  ribbon.rotation.x = 1.15
-  webglScene.add(ribbon)
-  for (let index = 0; index < 3; index += 1) {
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.86, 1, 96),
-      new THREE.MeshBasicMaterial({
-        color: index === 1 ? 0x079bb8 : 0x0869ac,
-        transparent: true,
-        opacity: 0,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-      }),
-    )
-    ring.userData.offset = index / 3
-    webglScene.add(ring)
-    shockRings.push(ring)
-  }
 
   sphere = new THREE.Group()
   cssScene.add(sphere)
