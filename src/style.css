@@ -254,95 +254,70 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 .go.slim { height: 44px; min-width: 120px; font-size: 15px; letter-spacing: 0.12em; }
 .go.stage {
   display: grid;
-  width: 112px;
-  height: 112px;
-  min-width: 112px;
+  width: 136px;
+  height: 136px;
+  min-width: 136px;
   place-items: center;
   padding: 0;
-  border: 1px solid rgb(255 255 255 / 62%);
+  border: 0;
   border-radius: 50%;
-  letter-spacing: 0;
-  background:
-    radial-gradient(circle at 32% 24%, rgb(255 255 255 / 70%), transparent 32%),
-    radial-gradient(circle at 50% 64%, #7fe4f2 0%, #079bb8 34%, #0869ac 70%, #054e86 100%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 85%),
-    inset 0 -16px 24px rgb(3 48 82 / 34%),
-    0 0 0 1px rgb(8 105 172 / 28%),
-    0 0 0 10px rgb(7 155 184 / 14%),
-    0 22px 48px rgb(8 105 172 / 38%),
-    0 0 46px rgb(7 155 184 / 42%);
-  animation: go-pulse 2.6s ease-in-out infinite;
+  background: transparent;
+  color: #fff;
+  box-shadow: none;
 }
-.go.stage svg {
-  width: 46px;
-  height: 46px;
-  margin-left: 4px;
-  filter: drop-shadow(0 2px 3px rgb(4 40 72 / 32));
+.go.stage .iris {
+  width: 136px;
+  height: 136px;
+  overflow: visible;
+  filter: drop-shadow(0 12px 18px rgb(8 105 172 / 32%)) drop-shadow(0 0 18px rgb(7 155 184 / 42%));
 }
-.go.stage.stop svg,
-.go.stage.calm svg { margin-left: 0; }
-.go.stage::before {
-  content: "";
-  position: absolute;
-  inset: -9px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  pointer-events: none;
+.go.stage .halo {
+  fill: rgb(7 155 184 / 10%);
+  stroke: rgb(7 155 184 / 35%);
+  stroke-width: 1;
 }
-.go.stage::after {
-  content: "";
-  position: absolute;
-  inset: 9px;
-  border-radius: 50%;
-  border: 1px solid rgb(255 255 255 / 38%);
-  background: linear-gradient(165deg, rgb(255 255 255 / 32%), transparent 46%);
-  pointer-events: none;
+.go.stage .bezel circle {
+  fill: none;
+  stroke: url(#iris-metal);
+  stroke-width: 3.5;
+  transform-origin: 80px 80px;
+  animation: iris-breathe 4.2s ease-in-out infinite;
 }
-.go.stage:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 90%),
-    inset 0 -16px 24px rgb(3 48 82 / 28%),
-    0 0 0 12px rgb(7 155 184 / 20%),
-    0 26px 54px rgb(8 105 172 / 46%),
-    0 0 58px rgb(7 155 184 / 55%);
+.go.stage .ticks {
+  stroke: #0869ac;
+  stroke-width: 2;
+  stroke-dasharray: 1.6 7.2;
 }
-.go.stage:active:not(:disabled) { transform: scale(0.94); }
-.go.stage.stop,
-.go.stage.calm { animation: none; }
-.go.stage.stop::before {
-  border-top-color: #fff;
-  border-right-color: #b7f3ff;
-  animation: spin-ring 0.85s linear infinite;
+.go.stage .blades path {
+  fill: url(#iris-blade);
+  stroke: rgb(255 255 255 / 55%);
+  stroke-width: 0.6;
 }
-.go.stage.stop {
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 75%),
-    inset 0 -16px 24px rgb(3 48 82 / 28%),
-    0 0 0 10px rgb(7 155 184 / 24%),
-    0 18px 42px rgb(7 155 184 / 46%),
-    0 0 36px rgb(127 228 242 / 55%);
+.go.stage .blades {
+  transform-origin: 80px 80px;
 }
-@keyframes go-pulse {
-  0%, 100% {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 85%),
-      inset 0 -16px 24px rgb(3 48 82 / 34%),
-      0 0 0 8px rgb(7 155 184 / 16%),
-      0 22px 48px rgb(8 105 172 / 38%),
-      0 0 28px rgb(7 155 184 / 36%);
-  }
-  50% {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 90%),
-      inset 0 -16px 24px rgb(3 48 82 / 28%),
-      0 0 0 16px rgb(7 155 184 / 0%),
-      0 24px 52px rgb(8 105 172 / 42%),
-      0 0 52px rgb(7 155 184 / 55%);
-  }
+.go.stage .core {
+  fill: url(#iris-core);
+  stroke: rgb(255 255 255 / 80%);
+  stroke-width: 1.2;
 }
-@keyframes spin-ring { to { transform: rotate(360deg); } }
+.go.stage .mark { fill: #fff; filter: drop-shadow(0 1px 1px rgb(4 50 80 / 35%)); }
+.go.stage:hover:not(:disabled) { transform: translateY(-3px) scale(1.04); }
+.go.stage:hover:not(:disabled) .iris {
+  filter: drop-shadow(0 16px 22px rgb(8 105 172 / 38%)) drop-shadow(0 0 28px rgb(7 155 184 / 62%));
+}
+.go.stage:active:not(:disabled) { transform: scale(0.95); }
+.go.stage.stop .blades { animation: iris-spin 2.6s linear infinite; }
+.go.stage.stop .bezel circle { animation: iris-spin 7s linear infinite reverse; }
+.go.stage.calm .blades { transform: scale(0.92); }
+.go.stage:disabled .bezel circle,
+.go.stage:disabled .blades { animation: none; }
+.go.stage:disabled .iris { filter: grayscale(0.2) brightness(0.86) drop-shadow(0 8px 12px rgb(8 105 172 / 16%)); }
+@keyframes iris-breathe {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(10deg); }
+}
+@keyframes iris-spin { to { transform: rotate(360deg); } }
 
 .history {
   position: absolute;
@@ -478,9 +453,9 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   width: var(--size);
   height: var(--size);
   pointer-events: none;
-  box-shadow: 0 0 10px rgb(7 155 184 / 55%);
+  box-shadow: 0 0 12px rgb(198 40 40 / 45%);
   animation-name: salute;
-  animation-timing-function: cubic-bezier(0.15, 0.7, 0.3, 1);
+  animation-timing-function: cubic-bezier(0.12, 0.45, 0.2, 1);
   animation-fill-mode: forwards;
 }
 .cannon.left { left: 9%; bottom: 18%; }
@@ -491,9 +466,9 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 .cannon.diamond { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
 .cannon.ring {
   background: transparent !important;
-  border: 2px solid var(--cyan, #079bb8);
+  border: 2px solid #f0d48a;
   border-radius: 50%;
-  box-shadow: 0 0 12px rgb(7 155 184 / 55);
+  box-shadow: 0 0 12px rgb(198 40 40 / 40%);
 }
 @keyframes salute {
   0% { opacity: 0; transform: translate(0, 12px) scale(0.35) rotate(0deg); }

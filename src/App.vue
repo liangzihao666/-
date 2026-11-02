@@ -72,7 +72,7 @@ function onReady() {
   if (phase.value === 'intro') phase.value = 'idle'
 }
 
-const saluteColors = ['#0869ac', '#079bb8', '#5ec4d8', '#ffffff', '#d7f4fa', '#e9f8fb']
+const saluteColors = ['#e53935', '#c62828', '#ef5350', '#b71c1c', '#ff8a80', '#d32f2f', '#f6c453', '#e7c56a']
 
 function salutePiece(origin, index, wave) {
   const spread = origin === 'center' ? 80 : 38
@@ -88,8 +88,8 @@ function salutePiece(origin, index, wave) {
     dx: Math.cos(angle) * dist,
     dy: Math.sin(angle) * dist + lift * 0.15,
     lift,
-    delay: wave * 0.16 + index * 0.008,
-    duration: 1.45 + Math.random() * 0.7,
+    delay: wave * 0.32 + index * 0.014,
+    duration: 2.8 + Math.random() * 1.5,
     rot: (Math.random() - 0.5) * 320,
     size: origin === 'center' ? 6 + Math.random() * 8 : 7 + Math.random() * 10,
   }
@@ -108,8 +108,8 @@ function burstConfetti() {
   volley.value = Array.from({ length: 160 }, (_, index) => ({
     id: `v-${Date.now()}-${index}`,
     left: (index * 7.3 + Math.random() * 4) % 100,
-    delay: (index % 9) * 0.045,
-    duration: 1.7 + (index % 6) * 0.22,
+    delay: (index % 12) * 0.08,
+    duration: 3.6 + (index % 6) * 0.42,
     size: 20 + (index % 5) * 6,
     drift: ((index % 2) ? 1 : -1) * (30 + (index % 8) * 18),
     rotate: -24 + (index % 11) * 5,
@@ -117,7 +117,7 @@ function burstConfetti() {
   setTimeout(() => {
     bits.value = []
     volley.value = []
-  }, 4600)
+  }, 6800)
 }
 
 function flashOn() {
@@ -307,14 +307,36 @@ onBeforeUnmount(() => {
           :title="goLabel"
           @click="onGo"
         >
-          <svg v-if="phase === 'spin' || phase === 'stopping'" viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
-          </svg>
-          <svg v-else-if="phase === 'reveal'" viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M5 12.5 9.2 17 19 7.2l-1.4-1.4-8.4 8.3-2.8-2.8L5 12.5Z" />
-          </svg>
-          <svg v-else viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M8 5.8v12.4L19 12 8 5.8Z" />
+          <svg class="iris" viewBox="0 0 160 160" aria-hidden="true">
+            <defs>
+              <linearGradient id="iris-blade" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#e9fbff" />
+                <stop offset="38%" stop-color="#079bb8" />
+                <stop offset="100%" stop-color="#0869ac" />
+              </linearGradient>
+              <radialGradient id="iris-core" cx="42%" cy="36%" r="68%">
+                <stop offset="0%" stop-color="#ffffff" />
+                <stop offset="46%" stop-color="#bff4fb" />
+                <stop offset="100%" stop-color="#079bb8" />
+              </radialGradient>
+              <linearGradient id="iris-metal" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f7fdff" />
+                <stop offset="45%" stop-color="#7dcee0" />
+                <stop offset="100%" stop-color="#0869ac" />
+              </linearGradient>
+            </defs>
+            <circle class="halo" cx="80" cy="80" r="76" />
+            <g class="bezel">
+              <circle cx="80" cy="80" r="70" />
+              <circle class="ticks" cx="80" cy="80" r="66" />
+            </g>
+            <g class="blades">
+              <path v-for="blade in 6" :key="blade" :transform="`rotate(${(blade - 1) * 60} 80 80)`" d="M80 26 L108 62 Q114 82 94 90 L80 80 Q68 62 80 26 Z" />
+            </g>
+            <circle class="core" cx="80" cy="80" r="18" />
+            <path v-if="phase === 'spin' || phase === 'stopping'" class="mark" d="M70 68 h8 v24 h-8 z M86 68 h8 v24 h-8 z" />
+            <path v-else-if="phase === 'reveal'" class="mark" d="M68 82 l8 8 18-20 -3-3 -15 16 -5-5 z" />
+            <path v-else class="mark" d="M74 62 L100 80 L74 98 Z" />
           </svg>
         </button>
       </div>
