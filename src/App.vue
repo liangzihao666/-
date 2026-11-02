@@ -40,6 +40,27 @@ const packets = [
   { id: 19, left: 70, delay: -6, duration: 12, size: 28, drift: 14, rotate: -5, extra: true },
   { id: 20, left: 34, delay: -2.4, duration: 9.5, size: 22, drift: -22, rotate: 11, extra: true },
 ]
+const idleColors = ['#e53935', '#c62828', '#ef5350', '#f6c453', '#e7c56a', '#fff7ea', '#9fd8ea', '#0869ac']
+const idleBits = Array.from({ length: 300 }, (_, index) => ({
+  id: `idle-${index}`,
+  left: (index * 2.41) % 100,
+  delay: -((index * 0.47) % 24),
+  duration: 18 + (index % 8) * 1.5,
+  size: 4 + (index % 5) * 2,
+  drift: ((index % 2) ? 1 : -1) * (14 + (index % 6) * 9),
+  rot: (index % 12) * 16,
+  color: idleColors[index % idleColors.length],
+  shape: ['dot', 'ribbon', 'diamond'][index % 3],
+}))
+const idlePackets = Array.from({ length: 24 }, (_, index) => ({
+  id: 30 + index,
+  left: (index * 4.1 + 3) % 100,
+  delay: -((index * 1.7) % 26),
+  duration: 20 + (index % 6) * 1.8,
+  size: 16 + (index % 4) * 4,
+  drift: ((index % 2) ? 1 : -1) * (10 + (index % 5) * 6),
+  rotate: -12 + (index % 7) * 4,
+}))
 const onceOnly = computed(() => state.onceOnly !== false)
 const pool = computed(() => eligiblePeople(state.people, state.winners, onceOnly.value))
 const currentPrize = computed(() => state.prizes.find(prize => prize.id === state.currentPrizeId) || state.prizes[0])
@@ -237,6 +258,34 @@ onBeforeUnmount(() => {
           '--w': `${packet.size}px`,
           '--drift': `${packet.drift}px`,
           '--rot': `${packet.rotate}deg`,
+        }"
+      ></span>
+      <span
+        v-for="packet in idlePackets"
+        :key="packet.id"
+        class="packet"
+        :style="{
+          left: `${packet.left}%`,
+          animationDelay: `${packet.delay}s`,
+          animationDuration: `${packet.duration}s`,
+          '--w': `${packet.size}px`,
+          '--drift': `${packet.drift}px`,
+          '--rot': `${packet.rotate}deg`,
+        }"
+      ></span>
+      <span
+        v-for="bit in idleBits"
+        :key="bit.id"
+        class="drift"
+        :class="bit.shape"
+        :style="{
+          left: `${bit.left}%`,
+          background: bit.color,
+          animationDelay: `${bit.delay}s`,
+          animationDuration: `${bit.duration}s`,
+          '--size': `${bit.size}px`,
+          '--drift': `${bit.drift}px`,
+          '--rot': `${bit.rot}deg`,
         }"
       ></span>
       <span

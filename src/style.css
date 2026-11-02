@@ -64,6 +64,23 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   box-shadow: 0 0 0 2px rgb(255 236 190 / 70%), 0 2px 4px rgb(120 72 16 / 25%);
 }
 .packet.extra { display: none; }
+.drift {
+  position: absolute;
+  top: -18px;
+  z-index: 1;
+  width: var(--size);
+  height: var(--size);
+  pointer-events: none;
+  opacity: 0.72;
+  animation: drift-fall linear infinite;
+}
+.drift.dot { border-radius: 50%; }
+.drift.ribbon { width: 3px; height: calc(var(--size) * 2.4); border-radius: 99px; }
+.drift.diamond { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+@keyframes drift-fall {
+  0% { transform: translate3d(0, -8vh, 0) rotate(var(--rot)); }
+  100% { transform: translate3d(var(--drift), 112vh, 0) rotate(calc(var(--rot) + 28deg)); }
+}
 .packet.volley {
   z-index: 7;
   animation-name: packet-burst;
@@ -654,5 +671,5 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   .prize-row input:nth-child(4) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .aura.spin, .cannon, .flash.on, .packet { animation: none; }
+  .aura.spin, .cannon, .flash.on, .packet, .drift { animation: none; }
 }
