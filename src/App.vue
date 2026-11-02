@@ -12,6 +12,7 @@ const settingsOpen = ref(false)
 const toast = ref('')
 const flash = ref(false)
 const bits = ref([])
+const volley = ref([])
 let toastTimer = 0
 let revealed = []
 let lastGo = 0
@@ -104,15 +105,27 @@ function salutePiece(origin, index, wave) {
 
 function burstConfetti() {
   const pieces = []
-  for (const wave of [0, 1]) {
-    for (let index = 0; index < 22; index += 1) pieces.push(salutePiece('left', index, wave))
-    for (let index = 0; index < 22; index += 1) pieces.push(salutePiece('right', index, wave))
-    for (let index = 0; index < 16; index += 1) pieces.push(salutePiece('center', index, wave))
+  const origins = ['left', 'right', 'center', 'left', 'right']
+  for (let wave = 0; wave < 3; wave += 1) {
+    origins.forEach((origin) => {
+      const count = origin === 'center' ? 28 : 36
+      for (let index = 0; index < count; index += 1) pieces.push(salutePiece(origin, index, wave))
+    })
   }
   bits.value = pieces
+  volley.value = Array.from({ length: 72 }, (_, index) => ({
+    id: `v-${Date.now()}-${index}`,
+    left: (index * 7.3 + Math.random() * 4) % 100,
+    delay: (index % 9) * 0.045,
+    duration: 1.7 + (index % 6) * 0.22,
+    size: 20 + (index % 5) * 6,
+    drift: ((index % 2) ? 1 : -1) * (30 + (index % 8) * 18),
+    rotate: -24 + (index % 11) * 5,
+  }))
   setTimeout(() => {
     bits.value = []
-  }, 3200)
+    volley.value = []
+  }, 3800)
 }
 
 function flashOn() {
@@ -238,6 +251,19 @@ onBeforeUnmount(() => {
           '--rot': `${packet.rotate}deg`,
         }"
       ></span>
+      <span
+        v-for="packet in volley"
+        :key="packet.id"
+        class="packet volley"
+        :style="{
+          left: `${packet.left}%`,
+          animationDelay: `${packet.delay}s`,
+          animationDuration: `${packet.duration}s`,
+          '--w': `${packet.size}px`,
+          '--drift': `${packet.drift}px`,
+          '--rot': `${packet.rotate}deg`,
+        }"
+      ></span>
     </div>
     <div class="flash" :class="{ on: flash }"></div>
     <span
@@ -266,7 +292,11 @@ onBeforeUnmount(() => {
           <p v-if="showCustomTitle" class="custom-title">{{ state.title }}</p>
         </div>
       </div>
-      <button class="ghost nav" type="button" :disabled="locked" @click="settingsOpen = true">设置</button>
+      <button class="icon-btn" type="button" :disabled="locked" aria-label="设置" title="设置" @click="settingsOpen = true">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Zm8.2 3.1-.9-.2a7.2 7.2 0 0 0-.5-1.3l.6-.7a1 1 0 0 0 0-1.4l-.9-.9a1 1 0 0 0-1.4 0l-.7.6a7.2 7.2 0 0 0-1.3-.5l-.2-.9a1 1 0 0 0-1-.8h-1.2a1 1 0 0 0-1 .8l-.2.9a7.2 7.2 0 0 0-1.3.5l-.7-.6a1 1 0 0 0-1.4 0l-.9.9a1 1 0 0 0 0 1.4l.6.7a7.2 7.2 0 0 0-.5 1.3l-.9.2a1 1 0 0 0-.8 1v1.2a1 1 0 0 0 .8 1l.9.2c.1.5.3.9.5 1.3l-.6.7a1 1 0 0 0 0 1.4l.9.9a1 1 0 0 0 1.4 0l.7-.6c.4.2.8.4 1.3.5l.2.9a1 1 0 0 0 1 .8h1.2a1 1 0 0 0 1-.8l.2-.9c.5-.1.9-.3 1.3-.5l.7.6a1 1 0 0 0 1.4 0l.9-.9a1 1 0 0 0 0-1.4l-.6-.7c.2-.4.4-.8.5-1.3l.9-.2a1 1 0 0 0 .8-1v-1.2a1 1 0 0 0-.8-1Z" />
+        </svg>
+      </button>
     </header>
 
     <aside v-if="state.winners.length" class="history" aria-label="中奖记录">
@@ -282,8 +312,24 @@ onBeforeUnmount(() => {
     <footer class="dock">
       <div class="action">
         <p class="status" aria-live="polite">{{ statusText }}</p>
-        <button class="go" :class="{ stop: phase === 'spin', calm: phase === 'reveal' || phase === 'stopping' }" type="button" :disabled="goDisabled" @click="onGo">
-          {{ goLabel }}
+        <button
+          class="go stage"
+          :class="{ stop: phase === 'spin' || phase === 'stopping', calm: phase === 'reveal' }"
+          type="button"
+          :disabled="goDisabled"
+          :aria-label="goLabel"
+          :title="goLabel"
+          @click="onGo"
+        >
+          <svg v-if="phase === 'spin' || phase === 'stopping'" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+          </svg>
+          <svg v-else-if="phase === 'reveal'" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M5 12.5 9.2 17 19 7.2l-1.4-1.4-8.4 8.3-2.8-2.8L5 12.5Z" />
+          </svg>
+          <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M8 5.8v12.4L19 12 8 5.8Z" />
+          </svg>
         </button>
         <p class="hint">空格键{{ phase === 'spin' ? '停止' : '抽取' }} · 还可抽取 {{ poolCount }} 人</p>
       </div>
