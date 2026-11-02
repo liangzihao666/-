@@ -152,7 +152,7 @@ async function onGo() {
     recordWinners(prize, picked)
     revealed = picked
     phase.value = 'stopping'
-    await stageRef.value?.reveal(picked)
+    await stageRef.value?.reveal(picked.map(person => ({ ...person, prizeName: prize.name })))
     phase.value = 'reveal'
     busy.value = false
     return
@@ -275,7 +275,6 @@ onBeforeUnmount(() => {
       <div class="brand-lockup">
         <div id="brand-stage" class="brand-stage" aria-hidden="true"></div>
         <div class="lockup">
-          <p class="eyebrow">AUNION</p>
           <h1><span class="year">2027</span><span class="name">年会抽奖</span></h1>
           <p v-if="showCustomTitle" class="custom-title">{{ state.title }}</p>
         </div>
