@@ -19,23 +19,30 @@ let lastGo = 0
 
 const showCustomTitle = computed(() => state.title && state.title !== defaultTitle)
 const packets = [
-  { id: 1, left: 7, delay: -3, duration: 18, size: 26, drift: 18, rotate: -8 },
-  { id: 2, left: 18, delay: -11, duration: 22, size: 22, drift: -14, rotate: 6 },
-  { id: 3, left: 29, delay: -7, duration: 20, size: 28, drift: 10, rotate: -4 },
-  { id: 4, left: 41, delay: -16, duration: 24, size: 20, drift: -20, rotate: 10 },
-  { id: 5, left: 63, delay: -5, duration: 19, size: 24, drift: 16, rotate: -12 },
-  { id: 6, left: 74, delay: -13, duration: 23, size: 30, drift: -12, rotate: 4 },
-  { id: 7, left: 86, delay: -9, duration: 21, size: 22, drift: 22, rotate: -6 },
-  { id: 8, left: 93, delay: -2, duration: 17, size: 26, drift: -18, rotate: 8 },
-  { id: 9, left: 12, delay: -1.2, duration: 11, size: 24, drift: 24, rotate: -10, extra: true },
-  { id: 10, left: 48, delay: -4, duration: 10, size: 20, drift: -16, rotate: 7, extra: true },
-  { id: 11, left: 70, delay: -6, duration: 12, size: 28, drift: 14, rotate: -5, extra: true },
-  { id: 12, left: 34, delay: -2.4, duration: 9.5, size: 22, drift: -22, rotate: 11, extra: true },
+  { id: 1, left: 4, delay: -2, duration: 20, size: 24, drift: 16, rotate: -8 },
+  { id: 2, left: 11, delay: -9, duration: 24, size: 20, drift: -12, rotate: 6 },
+  { id: 3, left: 18, delay: -15, duration: 22, size: 28, drift: 10, rotate: -4 },
+  { id: 4, left: 26, delay: -6, duration: 26, size: 18, drift: -18, rotate: 10 },
+  { id: 5, left: 33, delay: -18, duration: 21, size: 26, drift: 14, rotate: -11 },
+  { id: 6, left: 41, delay: -4, duration: 23, size: 22, drift: -10, rotate: 5 },
+  { id: 7, left: 49, delay: -12, duration: 19, size: 30, drift: 18, rotate: -6 },
+  { id: 8, left: 57, delay: -8, duration: 25, size: 20, drift: -16, rotate: 8 },
+  { id: 9, left: 64, delay: -16, duration: 22, size: 24, drift: 12, rotate: -9 },
+  { id: 10, left: 72, delay: -3, duration: 27, size: 18, drift: -14, rotate: 7 },
+  { id: 11, left: 79, delay: -11, duration: 20, size: 28, drift: 20, rotate: -5 },
+  { id: 12, left: 86, delay: -7, duration: 24, size: 22, drift: -12, rotate: 11 },
+  { id: 13, left: 93, delay: -14, duration: 21, size: 26, drift: 16, rotate: -7 },
+  { id: 14, left: 37, delay: -20, duration: 28, size: 16, drift: -8, rotate: 4 },
+  { id: 15, left: 68, delay: -1, duration: 23, size: 20, drift: 22, rotate: -12 },
+  { id: 16, left: 22, delay: -13, duration: 26, size: 18, drift: 8, rotate: 9 },
+  { id: 17, left: 12, delay: -1.2, duration: 11, size: 24, drift: 24, rotate: -10, extra: true },
+  { id: 18, left: 48, delay: -4, duration: 10, size: 20, drift: -16, rotate: 7, extra: true },
+  { id: 19, left: 70, delay: -6, duration: 12, size: 28, drift: 14, rotate: -5, extra: true },
+  { id: 20, left: 34, delay: -2.4, duration: 9.5, size: 22, drift: -22, rotate: 11, extra: true },
 ]
 const onceOnly = computed(() => state.onceOnly !== false)
 const pool = computed(() => eligiblePeople(state.people, state.winners, onceOnly.value))
 const currentPrize = computed(() => state.prizes.find(prize => prize.id === state.currentPrizeId) || state.prizes[0])
-const poolCount = computed(() => pool.value.length)
 const locked = computed(() => ['intro', 'spin', 'stopping', 'reveal'].includes(phase.value) || busy.value)
 
 const goLabel = computed(() => {
@@ -43,7 +50,7 @@ const goLabel = computed(() => {
   if (phase.value === 'spin') return '停止'
   if (phase.value === 'stopping') return '揭晓中'
   if (phase.value === 'reveal') return '继续'
-  if (!currentPrize.value || drawBlockReason(currentPrize.value, state.people, state.winners)) return '无法抽取'
+  if (!currentPrize.value || drawBlockReason(currentPrize.value, state.people, state.winners, onceOnly.value)) return '无法抽取'
   return '开始抽奖'
 })
 
@@ -51,21 +58,6 @@ const goDisabled = computed(() => {
   if (busy.value || phase.value === 'intro') return true
   if (phase.value === 'spin' || phase.value === 'reveal') return false
   return Boolean(drawBlockReason(currentPrize.value, state.people, state.winners, onceOnly.value))
-})
-
-const statusText = computed(() => {
-  const prize = currentPrize.value
-  if (phase.value === 'intro') return '姓名正在汇入光球'
-  if (phase.value === 'spin' && prize) return `正在抽取${prize.name}`
-  if (phase.value === 'stopping' && prize) return `正在揭晓${prize.name}`
-  if (phase.value === 'reveal') {
-    const names = revealed.map(person => person.name).join('、')
-    return `${prize?.name || '中奖'} · ${names}`
-  }
-  const reason = drawBlockReason(prize, state.people, state.winners, onceOnly.value)
-  if (reason) return reason
-  const once = Math.min(prize.perDraw, prizeSlotsLeft(prize, state.winners), pool.value.length)
-  return `${prize.name} · 本次 ${once} 人 · ${prize.gift || '现场公布'}`
 })
 
 function showToast(message) {
@@ -106,14 +98,14 @@ function salutePiece(origin, index, wave) {
 function burstConfetti() {
   const pieces = []
   const origins = ['left', 'right', 'center', 'left', 'right']
-  for (let wave = 0; wave < 3; wave += 1) {
+  for (let wave = 0; wave < 5; wave += 1) {
     origins.forEach((origin) => {
-      const count = origin === 'center' ? 28 : 36
+      const count = origin === 'center' ? 44 : 52
       for (let index = 0; index < count; index += 1) pieces.push(salutePiece(origin, index, wave))
     })
   }
   bits.value = pieces
-  volley.value = Array.from({ length: 72 }, (_, index) => ({
+  volley.value = Array.from({ length: 160 }, (_, index) => ({
     id: `v-${Date.now()}-${index}`,
     left: (index * 7.3 + Math.random() * 4) % 100,
     delay: (index % 9) * 0.045,
@@ -125,7 +117,7 @@ function burstConfetti() {
   setTimeout(() => {
     bits.value = []
     volley.value = []
-  }, 3800)
+  }, 4600)
 }
 
 function flashOn() {
@@ -143,11 +135,7 @@ async function onGo() {
   if (busy.value || phase.value === 'intro') return
   const prize = currentPrize.value
   if (phase.value === 'idle') {
-    const reason = drawBlockReason(prize, state.people, state.winners, onceOnly.value)
-    if (reason) {
-      showToast(reason)
-      return
-    }
+    if (drawBlockReason(prize, state.people, state.winners, onceOnly.value)) return
     revealed = []
     phase.value = 'spin'
     stageRef.value?.spin()
@@ -157,7 +145,6 @@ async function onGo() {
     const picked = pickWinners({ people: state.people, winners: state.winners, prize, onceOnly: onceOnly.value })
     if (!picked.length) {
       phase.value = 'idle'
-      showToast(drawBlockReason(prize, state.people, state.winners, onceOnly.value) || '没有可抽取的人员')
       return
     }
     busy.value = true
@@ -311,7 +298,6 @@ onBeforeUnmount(() => {
 
     <footer class="dock">
       <div class="action">
-        <p class="status" aria-live="polite">{{ statusText }}</p>
         <button
           class="go stage"
           :class="{ stop: phase === 'spin' || phase === 'stopping', calm: phase === 'reveal' }"
@@ -331,7 +317,6 @@ onBeforeUnmount(() => {
             <path fill="currentColor" d="M8 5.8v12.4L19 12 8 5.8Z" />
           </svg>
         </button>
-        <p class="hint">空格键{{ phase === 'spin' ? '停止' : '抽取' }} · 还可抽取 {{ poolCount }} 人</p>
       </div>
     </footer>
 
