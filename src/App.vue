@@ -17,6 +17,20 @@ let revealed = []
 let lastGo = 0
 
 const showCustomTitle = computed(() => state.title && state.title !== defaultTitle)
+const packets = [
+  { id: 1, left: 7, delay: -3, duration: 18, size: 26, drift: 18, rotate: -8 },
+  { id: 2, left: 18, delay: -11, duration: 22, size: 22, drift: -14, rotate: 6 },
+  { id: 3, left: 29, delay: -7, duration: 20, size: 28, drift: 10, rotate: -4 },
+  { id: 4, left: 41, delay: -16, duration: 24, size: 20, drift: -20, rotate: 10 },
+  { id: 5, left: 63, delay: -5, duration: 19, size: 24, drift: 16, rotate: -12 },
+  { id: 6, left: 74, delay: -13, duration: 23, size: 30, drift: -12, rotate: 4 },
+  { id: 7, left: 86, delay: -9, duration: 21, size: 22, drift: 22, rotate: -6 },
+  { id: 8, left: 93, delay: -2, duration: 17, size: 26, drift: -18, rotate: 8 },
+  { id: 9, left: 12, delay: -1.2, duration: 11, size: 24, drift: 24, rotate: -10, extra: true },
+  { id: 10, left: 48, delay: -4, duration: 10, size: 20, drift: -16, rotate: 7, extra: true },
+  { id: 11, left: 70, delay: -6, duration: 12, size: 28, drift: 14, rotate: -5, extra: true },
+  { id: 12, left: 34, delay: -2.4, duration: 9.5, size: 22, drift: -22, rotate: 11, extra: true },
+]
 const pool = computed(() => remainingPeople(state.people, state.winners))
 const currentPrize = computed(() => state.prizes.find(prize => prize.id === state.currentPrizeId) || state.prizes[0])
 const poolCount = computed(() => pool.value.length)
@@ -215,6 +229,22 @@ onBeforeUnmount(() => {
       @ready="onReady"
       @flash="flashOn"
     />
+    <div class="packets" :class="{ festive: phase === 'reveal' || phase === 'stopping' }" aria-hidden="true">
+      <span
+        v-for="packet in packets"
+        :key="packet.id"
+        class="packet"
+        :class="{ extra: packet.extra }"
+        :style="{
+          left: `${packet.left}%`,
+          animationDelay: `${packet.delay}s`,
+          animationDuration: `${packet.duration}s`,
+          '--w': `${packet.size}px`,
+          '--drift': `${packet.drift}px`,
+          '--rot': `${packet.rotate}deg`,
+        }"
+      ></span>
+    </div>
     <div class="flash" :class="{ on: flash }"></div>
     <span
       v-for="bit in bits"

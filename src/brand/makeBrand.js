@@ -3,9 +3,8 @@ import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import glyphs from './wordmark-paths.json'
 
 /**
- * 挤出昊量光电标志：箭头 + 青色扫光 + aunion 字标。
- * 几何、配色与官网三维场景 BrandScene.makeBrand() 一致：
- * 箭头 #0869ac，扫光 #079bb8，字标路径来自 wordmark-paths.json。
+ * 挤出昊量光电标志。几何与材质对齐官网 BrandScene.makeBrand()：
+ * 箭头 #0869ac、扫光 #079bb8、aunion 字标路径、挤出深度 96。
  */
 function extrudedPaths(path, color) {
   const group = new THREE.Group()
@@ -13,33 +12,29 @@ function extrudedPaths(path, color) {
     `<svg xmlns="http://www.w3.org/2000/svg"><path fill="${color}" fill-rule="nonzero" d="${path}"/></svg>`,
   )
   for (const pathData of svg.paths) {
-    const shapes = pathData.toShapes()
-    for (const shape of shapes) {
+    for (const shape of pathData.toShapes()) {
       const geometry = new THREE.ExtrudeGeometry(shape, {
-        depth: 180,
+        depth: 96,
         bevelEnabled: true,
         bevelSize: 2.2,
         bevelThickness: 2.8,
-        bevelSegments: 3,
-        curveSegments: 20,
+        bevelSegments: 5,
+        curveSegments: 40,
         steps: 1,
       })
-      geometry.computeVertexNormals()
       const face = new THREE.MeshStandardMaterial({
         color,
         metalness: 0.16,
         roughness: 0.32,
-        envMapIntensity: 0.45,
-        emissive: '#079bb8',
-        emissiveIntensity: 0.08,
+        envMapIntensity: 0.3,
+        emissive: '#2494c5',
+        emissiveIntensity: 0,
       })
       const edge = new THREE.MeshStandardMaterial({
         color,
-        metalness: 0.62,
+        metalness: 0.65,
         roughness: 0.28,
         envMapIntensity: 0.7,
-        emissive: '#0869ac',
-        emissiveIntensity: 0.05,
       })
       group.add(new THREE.Mesh(geometry, [face, edge]))
     }
@@ -76,20 +71,14 @@ export function makeBrand() {
   symbol.position.y = 800
   units.forEach((unit) => {
     unit.updateWorldMatrix(true, true)
-    const box = new THREE.Box3().setFromObject(unit)
-    if (box.isEmpty()) return
-    const localCenter = unit.worldToLocal(box.getCenter(new THREE.Vector3()))
+    const localCenter = unit.worldToLocal(new THREE.Box3().setFromObject(unit).getCenter(new THREE.Vector3()))
     unit.children.forEach(child => child.position.sub(localCenter))
     unit.position.add(localCenter.multiply(unit.scale))
   })
 
   const bounds = new THREE.Box3().setFromObject(group)
-  const size = bounds.getSize(new THREE.Vector3())
-  if (!Number.isFinite(size.x) || size.x <= 0) {
-    throw new Error('brand extrusion is empty')
-  }
   const center = bounds.getCenter(new THREE.Vector3())
-  const scale = 8.5 / size.x
+  const scale = 8.5 / bounds.getSize(new THREE.Vector3()).x
   units.forEach((unit) => {
     unit.position.sub(center).multiplyScalar(scale)
     unit.scale.multiplyScalar(scale)
