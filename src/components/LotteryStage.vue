@@ -40,9 +40,7 @@ let sphere
 let emblem
 let logo
 let ringA
-let ringB
 let glow
-let ambientPoints
 let burstPoints
 let burst
 let envTarget
@@ -238,7 +236,6 @@ async function reveal(winners) {
       card.scale.setScalar(THREE.MathUtils.lerp(1, scale, k))
     })
   }))
-  spawnBurst()
   emit('flash')
 }
 
@@ -277,40 +274,6 @@ function makeSoftTexture() {
   return texture
 }
 
-function makeAmbient(texture) {
-  const count = 420
-  const positions = new Float32Array(count * 3)
-  const colors = new Float32Array(count * 3)
-  const palette = [
-    [0.031, 0.412, 0.675],
-    [0.027, 0.608, 0.722],
-    [0.62, 0.84, 0.92],
-  ]
-  for (let i = 0; i < count; i += 1) {
-    const radius = 980 + Math.random() * 720
-    const theta = Math.random() * Math.PI * 2
-    const phi = Math.acos(2 * Math.random() - 1)
-    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
-    positions[i * 3 + 1] = radius * Math.cos(phi) * 0.72
-    positions[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta)
-    const color = palette[i % palette.length]
-    colors.set(color, i * 3)
-  }
-  const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-  const material = new THREE.PointsMaterial({
-    size: 16,
-    map: texture,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.75,
-    depthWrite: false,
-    sizeAttenuation: true,
-  })
-  return new THREE.Points(geometry, material)
-}
-
 function makeBurst(texture) {
   const positions = new Float32Array(burstCapacity * 3)
   const colors = new Float32Array(burstCapacity * 3)
@@ -319,11 +282,11 @@ function makeBurst(texture) {
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
   geometry.setDrawRange(0, 0)
   const material = new THREE.PointsMaterial({
-    size: 22,
+    size: 34,
     map: texture,
     vertexColors: true,
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.72,
     depthWrite: false,
     sizeAttenuation: true,
   })
@@ -333,7 +296,7 @@ function makeBurst(texture) {
 
 function spawnBurst() {
   burst = []
-  for (let i = 0; i < burstCapacity; i += 1) {
+  for (let i = 0; i < 42; i += 1) {
     const theta = Math.random() * Math.PI * 2
     const phi = Math.acos(2 * Math.random() - 1)
     const fast = 360 + Math.random() * 980
@@ -346,7 +309,7 @@ function spawnBurst() {
       vz: Math.sin(phi) * Math.sin(theta) * fast * 0.3,
       life: 1,
       decay: 0.28 + Math.random() * 0.45,
-      color: i % 2 === 0 ? [0.031, 0.412, 0.675] : [0.027, 0.608, 0.722],
+      color: i % 2 === 0 ? [0.93, 0.98, 1] : [0.62, 0.9, 0.96],
     })
   }
 }
@@ -383,8 +346,8 @@ function layout() {
   renderer?.setSize(width, height)
   cssRenderer?.setSize(width, height)
   if (badgeHost && badgeRenderer && badgeCamera) {
-    const badgeWidth = badgeHost.clientWidth || 640
-    const badgeHeight = badgeHost.clientHeight || 168
+    const badgeWidth = badgeHost.clientWidth || 248
+    const badgeHeight = badgeHost.clientHeight || 78
     badgeCamera.aspect = badgeWidth / Math.max(badgeHeight, 1)
     badgeCamera.updateProjectionMatrix()
     badgeRenderer.setSize(badgeWidth, badgeHeight, false)
@@ -409,12 +372,10 @@ function frame(now) {
     shuffleAt = now
   }
   if (emblem) {
-    if (mode === 'spin') emblem.rotation.y += dt * 0.9
-    else emblem.rotation.y = Math.sin(elapsed * 0.7) * 0.62
+    const sway = mode === 'spin' ? 0.78 : 0.48
+    emblem.rotation.y = Math.sin(elapsed * (mode === 'spin' ? 1.35 : 0.65)) * sway
   }
-  if (ringA) ringA.rotation.z += dt * 0.45
-  if (ringB) ringB.rotation.z -= dt * 0.28
-  if (ambientPoints) ambientPoints.rotation.y += dt * 0.04
+  if (ringA) ringA.rotation.z += dt * 0.35
   if (logo) {
     const pulse = mode === 'spin' ? 0.28 : mode === 'reveal' ? 0.42 : 0.1
     setBrandEmissive(logo, pulse * (0.65 + 0.35 * Math.sin(elapsed * 3.2)))
@@ -494,7 +455,7 @@ function mountScene() {
   const width = fitted.x || 8.5
   const uniform = 7.6 / width
   logo.scale.set(uniform, uniform, uniform * 2.8)
-  logo.rotation.x = 0.32
+  logo.rotation.x = 0.18
   emblem.add(logo)
 
   softTexture = makeSoftTexture()
@@ -505,25 +466,21 @@ function mountScene() {
     opacity: 0.45,
     depthWrite: false,
   }))
-  glow.scale.set(13, 6.2, 1)
-  glow.position.z = -0.6
+  glow.scale.set(8.2, 3.2, 1)
+  glow.position.z = -0.4
   emblem.add(glow)
 
   ringA = new THREE.Mesh(
-    new THREE.TorusGeometry(4.7, 0.07, 12, 100),
-    new THREE.MeshStandardMaterial({ color: '#0869ac', metalness: 0.45, roughness: 0.28, emissive: '#0869ac', emissiveIntensity: 0.35 }),
+    new THREE.TorusGeometry(4.35, 0.045, 12, 90),
+    new THREE.MeshStandardMaterial({ color: '#079bb8', metalness: 0.35, roughness: 0.32, emissive: '#079bb8', emissiveIntensity: 0.28 }),
   )
-  ringB = new THREE.Mesh(
-    new THREE.TorusGeometry(5.45, 0.045, 12, 100),
-    new THREE.MeshStandardMaterial({ color: '#079bb8', metalness: 0.4, roughness: 0.3, emissive: '#079bb8', emissiveIntensity: 0.45 }),
-  )
-  ringA.rotation.x = Math.PI / 2.15
-  ringB.rotation.x = Math.PI / 2.45
-  emblem.add(ringA, ringB)
+  ringA.rotation.x = Math.PI / 2.2
+  emblem.add(ringA)
 
   badgeHost = document.createElement('div')
   badgeHost.className = 'logo-badge'
-  element.appendChild(badgeHost)
+  const anchor = document.getElementById('brand-stage')
+  ;(anchor || element).appendChild(badgeHost)
   badgeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, premultipliedAlpha: false })
   badgeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
   badgeRenderer.setClearColor(0x000000, 0)
@@ -540,13 +497,11 @@ function mountScene() {
   const badgeRim = new THREE.DirectionalLight(0x079bb8, 1.1)
   badgeRim.position.set(4, -1, -3)
   badgeScene.add(badgeRim)
-  badgeCamera = new THREE.PerspectiveCamera(28, 640 / 168, 0.1, 80)
-  badgeCamera.position.set(0.2, 0.35, 16.5)
+  badgeCamera = new THREE.PerspectiveCamera(26, 280 / 86, 0.1, 80)
+  badgeCamera.position.set(0, 0.05, 10.6)
   badgeCamera.lookAt(0, 0, 0)
   badgeScene.add(emblem)
 
-  ambientPoints = makeAmbient(softTexture)
-  webglScene.add(ambientPoints)
   burstPoints = makeBurst(softTexture)
   webglScene.add(burstPoints)
 

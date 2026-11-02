@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import LotteryStage from './components/LotteryStage.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
-import { drawBlockReason, pickWinners, prizeSlotsLeft, prizeWonCount, remainingPeople } from './lottery.js'
+import { defaultTitle, drawBlockReason, pickWinners, prizeSlotsLeft, prizeWonCount, remainingPeople } from './lottery.js'
 import { clearWinners, recordWinners, replaceState, resetDemo, state } from './store.js'
 
 const stageRef = ref(null)
@@ -16,6 +16,7 @@ let toastTimer = 0
 let revealed = []
 let lastGo = 0
 
+const showCustomTitle = computed(() => state.title && state.title !== defaultTitle)
 const pool = computed(() => remainingPeople(state.people, state.winners))
 const currentPrize = computed(() => state.prizes.find(prize => prize.id === state.currentPrizeId) || state.prizes[0])
 const poolCount = computed(() => pool.value.length)
@@ -71,18 +72,40 @@ function onReady() {
   if (phase.value === 'intro') phase.value = 'idle'
 }
 
+const saluteColors = ['#0869ac', '#079bb8', '#5ec4d8', '#ffffff', '#d7f4fa', '#e9f8fb']
+
+function salutePiece(origin, index) {
+  const spread = origin === 'center' ? 64 : 46
+  const base = origin === 'left' ? -78 : origin === 'right' ? -102 : -90
+  const angle = (base + (Math.random() - 0.5) * spread) * Math.PI / 180
+  const dist = origin === 'center' ? 160 + Math.random() * 280 : 320 + Math.random() * 460
+  return {
+    id: `${origin}-${Date.now()}-${index}`,
+    origin,
+    shape: ['dot', 'dash', 'diamond'][index % 3],
+    color: saluteColors[index % saluteColors.length],
+    dx: Math.cos(angle) * dist,
+    dy: Math.sin(angle) * dist,
+    delay: index * 0.012 + Math.random() * 0.08,
+    duration: 1.25 + Math.random() * 0.75,
+    rot: (Math.random() - 0.5) * 280,
+    size: 5 + Math.random() * 7,
+  }
+}
+
 function burstConfetti() {
-  bits.value = Array.from({ length: 42 }, (_, index) => ({
-    id: `${Date.now()}-${index}`,
-    left: Math.random() * 100,
-    delay: Math.random() * 0.18,
-    duration: 1.5 + Math.random() * 1.3,
-    color: ['#0869ac', '#079bb8', '#ffffff', '#9fd8ea', '#d7f3f8'][index % 5],
-    drift: (Math.random() - 0.5) * 140,
-  }))
+  const pieces = []
+  for (let index = 0; index < 34; index += 1) pieces.push(salutePiece('left', index))
+  for (let index = 0; index < 34; index += 1) pieces.push(salutePiece('right', index))
+  for (let index = 0; index < 22; index += 1) pieces.push(salutePiece('center', index))
+  bits.value = pieces
   setTimeout(() => {
     bits.value = []
-  }, 3000)
+  }, 2800)
+}
+
+function tierMark(index) {
+  return String(index + 1).padStart(2, '0')
 }
 
 function flashOn() {
@@ -196,25 +219,31 @@ onBeforeUnmount(() => {
     <span
       v-for="bit in bits"
       :key="bit.id"
-      class="bit"
+      class="cannon"
+      :class="[bit.origin, bit.shape]"
       :style="{
-        left: `${bit.left}%`,
         background: bit.color,
         animationDelay: `${bit.delay}s`,
         animationDuration: `${bit.duration}s`,
-        '--drift': `${bit.drift}px`,
+        '--dx': `${bit.dx}px`,
+        '--dy': `${bit.dy}px`,
+        '--rot': `${bit.rot}deg`,
+        '--size': `${bit.size}px`,
       }"
     ></span>
 
     <header class="top">
-      <img class="wordmark" src="/brand/aunion-logo.png" alt="昊量光电 aunion" />
-      <div class="titles">
-        <p class="eyebrow">AUNION · ANNUAL GALA 2027</p>
-        <h1>{{ state.title }}</h1>
+      <div class="brand-lockup">
+        <div id="brand-stage" class="brand-stage" aria-hidden="true"></div>
+        <div class="lockup">
+          <p class="eyebrow">AUNION</p>
+          <h1><span class="year">2027</span><span class="name">年会抽奖</span></h1>
+          <p v-if="showCustomTitle" class="custom-title">{{ state.title }}</p>
+        </div>
       </div>
       <div class="top-actions">
         <span class="pill">同一人只中一次</span>
-        <button class="ghost" type="button" :disabled="locked" @click="settingsOpen = true">名单与奖项</button>
+        <button class="ghost nav" type="button" :disabled="locked" @click="settingsOpen = true">名单与奖项</button>
       </div>
     </header>
 
@@ -231,17 +260,19 @@ onBeforeUnmount(() => {
     <footer class="dock">
       <div class="chips" role="tablist" aria-label="奖项">
         <button
-          v-for="prize in state.prizes"
+          v-for="(prize, index) in state.prizes"
           :key="prize.id"
           type="button"
           class="chip"
-          :class="{ active: prize.id === currentPrize?.id, done: leftOf(prize) === 0 }"
+          :class="[`tier-${prize.id}`, { active: prize.id === currentPrize?.id, done: leftOf(prize) === 0 }]"
           :disabled="locked"
           @click="state.currentPrizeId = prize.id"
         >
+          <span class="tier-index">{{ tierMark(index) }}</span>
           <strong>{{ prize.name }}</strong>
-          <span>{{ wonOf(prize) }}/{{ prize.count }}</span>
+          <span class="tier-count"><b>{{ wonOf(prize) }}</b><i>/ {{ prize.count }}</i></span>
           <small>{{ prize.gift }}</small>
+          <em v-if="prize.id === currentPrize?.id" class="now">当前</em>
         </button>
       </div>
       <div class="action">
